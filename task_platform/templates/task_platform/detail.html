@@ -1,0 +1,363 @@
+{% extends 'task_platform/base.html' %}
+{% load staticfiles %}
+{% block title %} 任务详情 {% endblock %}
+<head>
+<link href="{% static 'css/detail.css' %}" rel="stylesheet">
+</head>
+{% block content %}
+<main id="tt-pageContent">
+  <div class="container">
+    <div class="tt-single-topic-list">
+      <div class="tt-item">
+        <div class="tt-single-topic">
+          <div class="tt-item-header">
+            <div class="tt-item-info info-top">
+              <div class="tt-avatar-icon">
+                <i class="tt-icon">
+                {% if task_class == "赏金模式" %}
+                  <svg>
+                    <use xlink:href="#bounty"></use>
+                  </svg>
+                {% else %}
+                  <svg>
+                    <use xlink:href="#hunter"></use>
+                  </svg>
+                {% endif %}
+                </i>
+              </div>
+              <div class="tt-avatar-title">
+                <a href="#">{{ publisher }}</a>
+              </div>
+              <a href="#" class="tt-info-time">
+                <i class="tt-icon"><svg>
+                    <use xlink:href="#icon-time"></use>
+                  </svg></i>{{ pub_time }}
+              </a>
+            </div>
+            <h3 class="tt-item-title">
+              <a href="#">{{ task_description }}</a>
+            </h3>
+            <div id='warp'>
+              {% for tag in tag_list %}
+              <a href="#"><span class="tt-badge">{{ tag }}</span></a>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="tt-item-description">
+            <h4 class="tt-title">任务详情</h4>
+            {{ task_detail | safe }}
+          </div>
+          </div>
+        </div>
+
+        {% if task_state == "未开始" and username == publisher %}
+          <!-- 错误信息反馈 -->
+          {% if message %}
+            <label>{{ message }}</label>
+          {% endif %}
+          <!--接受报价-->
+          <form class="form-default" method='POST'>
+            {% csrf_token %}
+            {% if user_task_list %} 
+            <div class="container">
+            <div class="tt-topic-list">
+            <div class="tt-list-header" style="background-color:#f8f9fb">
+              <div class="tt-col-value" style="width: 90%;"><center>描述</center></div>
+              <div class="tt-col-category" style="width: 17%">赏金要求</div>
+              <div class="tt-col-value" style="width: 20%;padding-left:2%">选择报价</div>
+              <div class="tt-col-value hide-mobile" style="width: 10%;padding:0%">发布时间</div>
+            </div>
+              {% for sig in user_task_list %}
+              
+                <div class="tt-item">
+                <div class="tt-col-value" style="width: 90%;">{{ sig.description }}</div>
+                <div class="tt-col-value" style="width: 17%"><span name="sub_money" >{{ sig.submit_money }}</span>
+                          <span id="perc" style="display:none;">{{ percentage }}</span>
+                          <span name="class_" style="display:none;">{{ task_class }}</span></div>
+                <div class="tt-col-value" style="width: 20%;padding-left:2%">
+                <input name="accept" type="checkbox" id={{ sig.username }} value={{ sig.username }} style="">
+                <label class="square" for={{ sig.username }}></label>
+                {% comment %} <input name="accept" type="checkbox" id={{ sig.username}} value={{ sig.username }} style=""/> {% endcomment %}
+                </div>
+                <div class="tt-col-value hide-mobile" style="width: 10%;padding:0%">{{ sig.pub_time }}</div>
+                </div>
+              {% endfor %}
+            </div>
+            <div style="height:60px">
+            </div>
+            </div>
+              <center><input onclick="return confirm('确定要提交?')" type="submit" class="btn btn-secondary" style="background-color: #cd6521" value="开始任务" ></center>
+            {% else %}
+            <div class="tt-single-topic" style="text-align:center;">
+              <span style="position:relative;">
+                <font style="font-size:20px;color:#000000">
+                  暂无报价！
+                </font>
+              </span>
+            </div>
+            {% endif %}
+          </form>
+
+        {% elif task_state == "未开始" and username != publisher %}
+          <div class="tt-wrapper-inner">
+              <h4 class="tt-title-separator"><span>我是分隔线_（：3 」∠）_ </span></h4>
+          </div>
+          <center><strong><div class='text'>如果你想接受这个任务，你需要提出自己的报价。注意：提交报价时你需要支付与你的报价相同金额的赏金币作为押金。</div></strong></center>
+          {% if message %}
+          <center><strong>
+            <div class="tt-item tt-item-popup">
+              <div class="tt-col-message">{{ message }}</div>
+            </div>
+          </strong>
+          </center>
+          {% endif %}
+          <form class="form-default" method="POST">
+            {% csrf_token %}
+            <div class="tt-wrapper-inner">
+              <div class="pt-editor form-default">
+                <h6 class="pt-title">提交你的报价</h6>
+                <div class="pt-row">
+                  <div class="col-left">
+                    <label>
+                      <span class="tt-text">报价</span>
+                    </label>
+                    <input type="text" class="form-control" name="money"></input>
+                  </div>
+                  <div class="col-right tt-hidden-mobile">
+                    <a href="#" class="btn btn-primary">返回顶部</a>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <textarea name="description" class="form-control" rows="5" placeholder="Lets get started"></textarea>
+                </div>
+                <div class="pt-row">
+                  <div class="col-left">
+                    <p>写出你想说的话，最多30字</p>
+                  </div>
+                  <div class="col-auto">
+                    <input type="submit" name="submit_money_" class="btn btn-secondary btn-width-lg" value="提交报价"></input>
+                  </div>
+                </div>
+              </div>
+          </form>
+
+        {% elif task_state == "进行中" and username == publisher and task_class == "赏金模式"%}
+          <form class="form-default" method="POST">
+            {% csrf_token %}
+            <div class="tt-wrapper-inner">
+              <div class="pt-editor form-default">
+                <div class="pt-row"style="text-align:center">
+                    <input type="submit" name="revoke_btn" style="margin-left:25%; background-color:rgb(173, 84, 10);" class="btn btn-secondary btn-width-lg" value="撤销任务"></input>
+                    <input type="submit" name="complete_btn" style="margin-right:25%;background-color:rgb(26, 121, 2);" class="btn btn-secondary btn-width-lg" value="完成任务"></input>
+                </div>
+              </div>
+          </form>
+
+        {% elif task_state == "进行中" and username != publisher and is_receiver and task_class == "赏金模式"%}
+          <form class="form-default" method="POST">
+            {% csrf_token %}
+            <div class="tt-wrapper-inner">
+              <div class="pt-editor form-default">
+                <div class="pt-row" style="text-align:center">
+                    <input type="submit" name="abort_btn" style="margin-left:45%;background-color:rgba(255, 24, 24, 0.973);" class="btn btn-secondary btn-width-lg" value="终止任务"></input>
+                </div>
+              </div>
+          </form>
+        
+        {% elif task_state == "进行中" and username == publisher and task_class == "猎人模式"%}
+          <form class="form-default" method="POST">
+            {% csrf_token %}
+            <div class="tt-wrapper-inner">
+              <div class="pt-editor form-default">
+                <div class="pt-row" style="text-align:center">
+                    <input type="submit" name="abort_btn" style="margin-left:45%;background-color:rgba(255, 24, 24, 0.973);" class="btn btn-secondary btn-width-lg" value="终止任务"></input>
+                </div>
+              </div>
+          </form>
+
+        {% elif task_state == "进行中" and username != publisher and is_receiver and task_class == "猎人模式"%}
+          <form class="form-default" method="POST">
+            {% csrf_token %}
+            <div class="tt-wrapper-inner">
+              <div class="pt-editor form-default">
+                <div class="pt-row"style="text-align:center">
+                    <input type="submit" name="complete_btn" style="margin-right:25%;background-color:rgb(26, 121, 2);" class="btn btn-secondary btn-width-lg" value="确认完成"></input>
+                </div>
+              </div>
+          </form>
+
+        {% elif task_state != "未开始" and task_state != "进行中"%}
+
+
+
+
+        {% else %} <!-- 任务接收者(们)确认完成 -->
+
+
+
+        {% endif %}
+    <h4 class="tt-title-separator"><span> </span></h4>
+        {% if  task_state == "进行中" and is_receiver or task_state == "进行中" and is_publisher %}
+			<form class="form-default" method='POST'>
+			{% csrf_token %}
+			<div class="container">
+			<div class="tt-topic-list">
+		    {% if little_task_list %}
+                    <label for="inputTopicTitle">该任务的子任务如下</label>
+                    <div class="tt-list-header" style="background-color:#b3d7ff">
+			  <div class="tt-col-value" style="width: 20%;"><center>任务描述</center></div>
+			  <div class="tt-col-category" style="width: 20%">任务类型</div>
+			  <div class="tt-col-value" style="width: 30%;padding-left:2%">任务详情</div>
+			  <div class="tt-col-value hide-mobile" style="width: 10%">所需人数</div>
+			  <div class="tt-col-value hide-mobile" style="width: 20%">预估任务耗时</div>
+			</div>
+                {% endif %}
+			       {% for i in little_task_list%}
+				        <div class="tt-item">
+				        <div class="tt-col-value" style="width: 20%;">{{ i.task_description }}</div>
+				        <div class="tt-col-value" style="width: 20%">{{ i.task_class }}</div>
+				        <div class="tt-col-value" style="width: 30%">{{ i.task_detail }}</div>
+						<div class="tt-col-value" style="width: 10%">{{ i.people_needed }}</div>
+						<div class="tt-col-value" style="width: 20%">{{ i.expected_time_consuming }}</div>
+				        </div>
+				   {% endfor %}
+                    <div class="tt-wrapper-inner">
+              <h4 class="tt-title-separator"><span> </span></h4>
+                    </div>
+			        <form class="form-default" method="POST" >
+                    <label for="inputTopicTitle">这里是任务分包，可以将大任务分成几个小任务（多次提交即可）</label>
+			          {% csrf_token %}
+					<input type="hidden" name="parent_id"  value="{{ task_id }}" ></input>
+			          <input type="hidden" name="v" id="v" value="赏金模式" />
+			          <div class="form-group">
+			            <label for="inputTopicTitle">任务简述</label>
+			            <div class="tt-value-wrapper">
+			              <input type="text" name="task_description" class="form-control" id="inputTopicTitle" placeholder="你的任务简要描述，例如：找人取快递。此部分会在主页展示">
+			              <span class="tt-value-input">最多50字</span>
+			            </div>
+			            <div class="tt-note">可以在下面提出合理的价格，给任务接收方参考</div>
+			          </div>
+                        <script>function fun1() {
+                                document.getElementById("v").value="赏金模式";}
+                                function fun2() {
+                                        document.getElementById("v").value="猎人模式";
+                                }
+                        </script>
+			          <div class="form-group">
+			            <label>任务类型</label>
+			            <div class="tt-js-active-btn tt-wrapper-btnicon">
+			              <div class="row tt-w410-col-02">
+			                <div class="col-4 col-lg-3 col-xl-2">
+			                  <a  class="tt-button-icon"  xx="赏金模式">
+			                    <span class="tt-icon" onclick="fun1()">
+			                      <svg >
+			                        <use xlink:href="#bounty"></use>
+			                      </svg>
+			                    </span>
+			                    <span class="tt-text">赏金模式</span>
+			                  </a>
+			                </div>
+			                <div class="col-4 col-lg-3 col-xl-2">
+			                  <a  class="tt-button-icon" xx="猎人模式">
+			                    <span class="tt-icon" onclick="fun2()">
+			                      <svg >
+			                        <use xlink:href="#hunter"></use>
+			                      </svg>
+			                    </span>
+			                    <span class="tt-text">猎人模式</span>
+			                  </a>
+			                </div>
+			                <div style="margin-right:90px;margin-left:90px;margin-top:30px;   display: flex;
+			                                  align-items: center;">
+			                    <center>
+			                    <span id="tips" class="tt-text"style="font-size:22px;location:absolute;display:block;"></span>
+			                    </center>
+			                </div>
+			              </div>
+			            </div>
+			          </div>
+			          <div class="pt-editor">
+			            <div class="row">
+			              <div class="col-md-2">
+			                <div class="form-group" >
+			                  <label for="inputTopicTitle">任务详情</label>
+			                  <div style="display: -webkit-flex;display: inline ;align-items:center;">
+			                  <span id="表">
+			                  <input name="task_detail" class="form-control" placeholder="你可以写点什么" style="width:500px;">
+			                  </span>
+
+			                  </input>
+			                  </div>
+			                </div>
+			              </div>
+			            <div style="margin:20px;">
+			            <div class="row">
+			              <div class="col-md-2">
+			                <div class="form-group" >
+			                  <label for="inputTopicTitle">所需人数</label>
+			                  <div style="display: -webkit-flex;display: inline ;align-items:center;">
+			                  <span id="表">
+			                  <input name="people_needed" class="form-control" placeholder="最多50人" style="width:100px;">
+			                  </span>
+                                 <b style=" color:#000000;font-weight:400;margin-left:10px;">   人</b>
+			                  </input>
+			                  </div>
+			                </div>
+			              </div>
+			              <div class="col-md-2">
+			                <div class="form-group">
+			                  <label>预估任务耗时</label>
+			                  <div style="display: -webkit-flex;display: inline-flex;align-items:center; ">
+			                  <input name="expected_time_consuming" class="form-control"style="width:100px;">
+			                  <b style=" color:#000000;font-weight:400;margin-left:10px;">   小时</b>
+			                  </input>
+			                  </div>
+			                </div>
+			              </div>
+			              <div class="col-md-5">
+			                <div class="form-group">
+			                  <label for="inputTopicTags">标签</label>
+			                  <input type="text" name="tag_list" class="form-control" id="inputTopicTags" placeholder="填写你认为该任务所需要的标签，多个标签用空格分隔">
+			                </div>
+			              </div>
+			              <div class="col-auto ml-md-auto" style="margin-top:40px;">
+			                <input type="submit" class="btn btn-secondary btn-width-lg" value="创建任务"></input>
+			              </div>
+			            </div>
+			            </div>
+</div>
+			          </div>
+			        </form>
+
+			 </div>
+			 </div>
+			 </form>{% endif%}
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var money_ = document.getElementsByName('sub_money');
+    var class_ = document.getElementsByName('class_');
+    var perc_ = document.getElementById('perc').innerHTML;
+    console.log(money_[0].innerHTML);
+    for(i = 0; i < money_.length; i++)
+    {
+      if (class_[i].innerHTML == "赏金模式") {
+        console.log(money_[i].innerHTML);
+          money_[i].innerHTML = money_[i].innerHTML * (1 + parseFloat(perc_));
+          console.log(money_[i].innerHTML);
+        }
+      else if (class_[i].innerHTML == "猎人模式") {
+          money_[i].innerHTML = money_[i].innerHTML * (1 - parseFloat(perc_));
+        }
+      else {
+          alert('出错啦！')
+        }
+      money_[i].innerHTML=parseFloat(money_[i].innerHTML).toFixed(2);
+      console.log(money_[i].innerHTML+" hanpi");
+    }
+  </script>
+</main>
+
+{% endblock %}

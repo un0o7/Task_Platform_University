@@ -1,0 +1,28 @@
+input[type="checkbox"] {
+	/*
+   display: none;这样会让tab键无法选取自定义的checkbox，所以使用下面的方法
+   clip 属性剪裁绝对定位元素。
+   */
+   position: absolute;
+   clip: rect(0, 0, 0, 0)
+ }
+ .square::before {
+    content: '';
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background: #EEE;
+    vertical-align: middle;
+    margin-right: 5px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    transition: background ease-in .5s;
+}
+label {
+    cursor: default;
+}
+input[type="checkbox"]:checked+.square::before {
+    background-color: #FA8E53;
+    border: 5px #EEE solid;
+}
